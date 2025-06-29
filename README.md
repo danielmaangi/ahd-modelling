@@ -4,9 +4,10 @@ A production-ready machine learning system for predicting advanced HIV disease u
 
 ## 🎯 Overview
 
-This project implements an end-to-end machine learning pipeline for predicting advanced HIV disease (CD4 count < 200 cells/µL) using patient clinical data. The system includes:
+This project implements an end-to-end machine learning pipeline for predicting advanced HIV disease (CD4 count < 200 cells/µL) using real patient clinical data from the PLHIV Linelist. The system includes:
 
-- **XGBoost Classification Model** with comprehensive feature engineering
+- **XGBoost Classification Model** trained on real HIV patient data with comprehensive feature engineering
+- **Real Data Processing Pipeline** that handles over 1.2M patient records from PLHIV Linelist
 - **FastAPI REST API** with async support and automatic documentation
 - **Kubernetes Deployment** with horizontal pod autoscaling
 - **Comprehensive Monitoring** with Prometheus and Grafana
@@ -68,12 +69,24 @@ This project implements an end-to-end machine learning pipeline for predicting a
    pip install -r requirements.txt
    ```
 
-3. **Start the API server:**
+3. **Train the model with real data:**
+```bash
+# Train with a sample of 10,000 records (for quick testing)
+python train_with_real_data.py
+
+# Or use the complete pipeline script
+python scripts/train_complete_pipeline.py --n-samples 10000
+
+# To use all 1.2M+ records (requires more time and memory)
+python scripts/train_complete_pipeline.py
+```
+
+4. **Start the API server:**
 ```bash
 uvicorn src.api.app:app --host 0.0.0.0 --port 5000 --reload
 ```
 
-4. **Test the API:**
+5. **Test the API:**
 ```bash
 python tests/test_api.py
 ```

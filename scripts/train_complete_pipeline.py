@@ -13,12 +13,13 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 # Import our modules
-from data.data_generator import HIVDataGenerator
+from data.data_loader import HIVDataLoader
 from data.data_preprocessing import HIVDataPreprocessor
 from data.feature_engineering import HIVFeatureEngineer
 from models.train_model import HIVModelTrainer
@@ -48,22 +49,22 @@ def setup_directories(base_dir: Path) -> None:
     logger.info("Created necessary directories")
 
 
-def generate_synthetic_data(config: dict, output_dir: Path) -> Path:
-    """Generate synthetic HIV dataset."""
-    logger.info("Starting synthetic data generation...")
+def load_real_data(config: dict, output_dir: Path, sample_size: Optional[int] = None) -> Path:
+    """Load and process real HIV dataset."""
+    logger.info("Starting real data loading and processing...")
     
-    # Initialize data generator
-    generator = HIVDataGenerator(config_path=None)  # Use default config for now
+    # Initialize data loader
+    loader = HIVDataLoader(config_path=None)  # Use default config for now
     
-    # Generate dataset
-    n_samples = config.get('data_generation', {}).get('n_samples', 1000)
-    dataset = generator.generate_dataset(n_samples=n_samples)
+    # Load and process the real data
+    input_file = "data/raw/PLHIV Linelist.csv"
+    dataset = loader.load_and_process_data(input_file, sample_size=sample_size)
     
-    # Save dataset
-    output_file = output_dir / 'synthetic_hiv_data.csv'
-    generator.save_dataset(dataset, str(output_file), include_summary=True)
+    # Save processed dataset
+    output_file = output_dir / 'processed_real_hiv_data.csv'
+    loader.save_processed_data(dataset, str(output_file), include_summary=True)
     
-    logger.info(f"Generated {len(dataset)} synthetic samples")
+    logger.info(f"Processed {len(dataset)} real samples")
     logger.info(f"Advanced HIV prevalence: {dataset['advanced_hiv'].mean():.1%}")
     
     return output_file
@@ -375,9 +376,9 @@ def main():
     parser.add_argument('--output-dir', type=str, default='.',
                        help='Output directory for all artifacts')
     parser.add_argument('--n-samples', type=int, default=1000,
-                       help='Number of synthetic samples to generate')
+                       help='Number of samples to use from real data (default: use all data)')
     parser.add_argument('--skip-data-generation', action='store_true',
-                       help='Skip synthetic data generation')
+                       help='Skip real data loading and processing')
     parser.add_argument('--data-file', type=str, default=None,
                        help='Use existing data file instead of generating')
     parser.add_argument('--skip-evaluation', action='store_true',
@@ -405,17 +406,14 @@ def main():
     logger.info(f"Configuration: {args.config}")
     
     try:
-        # Step 1: Data Generation or Loading
+        # Step 1: Data Loading
         if args.skip_data_generation and args.data_file:
             data_file = Path(args.data_file)
             logger.info(f"Using existing data file: {data_file}")
         elif not args.skip_data_generation:
-            # Update config with command line arguments
-            if 'data_generation' not in config:
-                config['data_generation'] = {}
-            config['data_generation']['n_samples'] = args.n_samples
-            
-            data_file = generate_synthetic_data(config, output_dir / 'data' / 'synthetic')
+            # Load and process real data
+            sample_size = args.n_samples if args.n_samples != 1000 else None  # Use all data unless specified
+            data_file = load_real_data(config, output_dir / 'data' / 'processed', sample_size=sample_size)
         else:
             raise ValueError("Must provide --data-file when using --skip-data-generation")
         
