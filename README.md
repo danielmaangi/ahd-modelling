@@ -46,8 +46,8 @@ This project implements an end-to-end machine learning pipeline for predicting a
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/danielmaangi/ahd-e2d.git
-   cd ahd-e2d
+   git clone https://github.com/danielmaangi/ahd-modelling.git
+   cd ahd-modelling
    ```
 
 2. **Install uv (if not already installed)**
