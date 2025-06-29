@@ -1,0 +1,351 @@
+# HIV Disease Prediction API Configuration
+
+# API Configuration
+api:
+  title: "HIV Disease Prediction API"
+  description: "Machine learning API for predicting advanced HIV disease using XGBoost"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 5000
+  workers: 4
+  reload: false
+  
+  # API Documentation
+  docs:
+    url: "/docs"
+    redoc_url: "/redoc"
+    openapi_url: "/openapi.json"
+    
+  # Request/Response Configuration
+  request:
+    max_size: "10MB"
+    timeout: 30
+    
+  response:
+    include_headers: true
+    pretty_json: true
+
+# Model Configuration
+model:
+  path: "models/"
+  version: "1.0.0"
+  
+  # Model files
+  files:
+    model: "hiv_xgboost_model.pkl"
+    scaler: "scaler.pkl"
+    label_encoder: "label_encoder_gender.pkl"
+    features: "feature_columns.pkl"
+    metadata: "model_metadata.json"
+  
+  # Prediction settings
+  prediction:
+    batch_size_limit: 100
+    confidence_threshold: 0.5
+    
+    # Risk level thresholds
+    risk_thresholds:
+      low: 0.3
+      medium: 0.7
+      high: 1.0
+
+# Security Configuration
+security:
+  # CORS settings
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers: ["*"]
+    allow_credentials: true
+    
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    burst_size: 20
+    
+  # Authentication (disabled for demo)
+  authentication:
+    enabled: false
+    type: "bearer"  # bearer, api_key, basic
+    secret_key: "your-secret-key-here"
+    
+  # Input validation
+  validation:
+    strict_mode: true
+    sanitize_input: true
+
+# Monitoring Configuration
+monitoring:
+  # Metrics collection
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    include_labels: true
+    
+    # Custom metrics
+    custom_metrics:
+      - name: "prediction_requests_total"
+        type: "counter"
+        description: "Total number of prediction requests"
+        
+      - name: "prediction_latency_seconds"
+        type: "histogram"
+        description: "Prediction request latency"
+        
+      - name: "model_predictions_total"
+        type: "counter"
+        description: "Total predictions by result"
+        labels: ["result", "risk_level"]
+  
+  # Health checks
+  health:
+    enabled: true
+    endpoint: "/health"
+    include_details: true
+    
+  # Readiness checks
+  readiness:
+    enabled: true
+    endpoint: "/ready"
+    model_check: true
+    
+  # Prediction logging
+  prediction_logging:
+    enabled: true
+    log_level: "INFO"
+    include_input: false  # Don't log sensitive patient data
+    include_output: true
+    sample_rate: 1.0
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Console logging
+  console:
+    enabled: true
+    level: "INFO"
+    
+  # File logging
+  file:
+    enabled: true
+    filename: "api.log"
+    max_size: "50MB"
+    backup_count: 10
+    level: "INFO"
+    
+  # JSON logging for structured logs
+  json_logging:
+    enabled: true
+    filename: "api_structured.log"
+    
+  # Request logging
+  request_logging:
+    enabled: true
+    include_headers: false
+    include_body: false
+    exclude_paths: ["/health", "/ready", "/metrics"]
+
+# Database Configuration (for future use)
+database:
+  enabled: false
+  type: "postgresql"  # postgresql, mysql, sqlite
+  host: "localhost"
+  port: 5432
+  name: "hiv_prediction"
+  username: "api_user"
+  password: "secure_password"
+  
+  # Connection pool
+  pool:
+    min_size: 5
+    max_size: 20
+    timeout: 30
+
+# Cache Configuration (for future use)
+cache:
+  enabled: false
+  type: "redis"  # redis, memcached, memory
+  host: "localhost"
+  port: 6379
+  db: 0
+  ttl: 3600  # 1 hour
+  
+  # Cache keys
+  keys:
+    prediction: "prediction:{hash}"
+    model_info: "model_info"
+
+# Background Tasks Configuration
+background_tasks:
+  enabled: true
+  
+  # Task types
+  tasks:
+    prediction_logging:
+      enabled: true
+      queue_size: 1000
+      
+    model_monitoring:
+      enabled: true
+      interval: 300  # 5 minutes
+      
+    health_checks:
+      enabled: true
+      interval: 60  # 1 minute
+
+# Development Configuration
+development:
+  debug: false
+  auto_reload: false
+  
+  # Development features
+  features:
+    mock_predictions: false
+    detailed_errors: false
+    profiling: false
+
+# Production Configuration
+production:
+  # Performance settings
+  performance:
+    workers: 4
+    worker_class: "uvicorn.workers.UvicornWorker"
+    max_requests: 1000
+    max_requests_jitter: 100
+    preload_app: true
+    
+  # Resource limits
+  resources:
+    memory_limit: "512MB"
+    cpu_limit: "500m"
+    
+  # Graceful shutdown
+  shutdown:
+    timeout: 30
+    
+  # SSL/TLS (handled by ingress in K8s)
+  ssl:
+    enabled: false
+    cert_file: "/etc/ssl/certs/api.crt"
+    key_file: "/etc/ssl/private/api.key"
+
+# Feature Flags
+features:
+  # API features
+  batch_predictions: true
+  model_info_endpoint: true
+  prediction_explanation: false
+  
+  # Monitoring features
+  detailed_metrics: true
+  performance_tracking: true
+  error_tracking: true
+  
+  # Experimental features
+  async_predictions: true
+  model_versioning: false
+  a_b_testing: false
+
+# Environment-specific overrides
+environments:
+  development:
+    api:
+      reload: true
+      workers: 1
+    logging:
+      level: "DEBUG"
+    development:
+      debug: true
+      detailed_errors: true
+      
+  testing:
+    api:
+      port: 5001
+    logging:
+      level: "WARNING"
+    monitoring:
+      prediction_logging:
+        enabled: false
+        
+  production:
+    api:
+      workers: 4
+      reload: false
+    logging:
+      level: "INFO"
+    security:
+      rate_limiting:
+        requests_per_minute: 1000
+    production:
+      performance:
+        workers: 8
+
+# Integration Configuration
+integrations:
+  # Prometheus
+  prometheus:
+    enabled: true
+    port: 8000
+    path: "/metrics"
+    
+  # Grafana
+  grafana:
+    enabled: false
+    dashboard_url: "http://grafana:3000"
+    
+  # External APIs (for future use)
+  external_apis:
+    enabled: false
+    
+    # DHIS2 integration example
+    dhis2:
+      enabled: false
+      base_url: "https://play.dhis2.org/2.39.1.1"
+      username: "admin"
+      password: "district"
+      
+  # Message queues (for future use)
+  message_queue:
+    enabled: false
+    type: "rabbitmq"  # rabbitmq, kafka, redis
+    host: "localhost"
+    port: 5672
+
+# Alerting Configuration
+alerting:
+  enabled: false
+  
+  # Alert channels
+  channels:
+    email:
+      enabled: false
+      smtp_host: "smtp.gmail.com"
+      smtp_port: 587
+      username: "alerts@example.com"
+      password: "app_password"
+      
+    slack:
+      enabled: false
+      webhook_url: "https://hooks.slack.com/services/..."
+      
+    webhook:
+      enabled: false
+      url: "https://api.example.com/alerts"
+  
+  # Alert rules
+  rules:
+    high_error_rate:
+      threshold: 0.05  # 5% error rate
+      window: "5m"
+      
+    high_latency:
+      threshold: 2.0  # 2 seconds
+      window: "5m"
+      
+    model_performance_drop:
+      threshold: 0.1  # 10% performance drop
+      window: "1h"

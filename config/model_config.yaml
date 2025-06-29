@@ -1,0 +1,281 @@
+# HIV Disease Prediction Model Configuration
+
+model:
+  name: "HIV_XGBoost_Classifier"
+  type: "xgboost"
+  version: "1.0.0"
+  description: "XGBoost classifier for predicting advanced HIV disease (CD4 < 200)"
+  
+  # XGBoost hyperparameters
+  parameters:
+    objective: "binary:logistic"
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    random_state: 42
+    eval_metric: "auc"
+    early_stopping_rounds: 10
+    
+  # Advanced parameters for tuning
+  advanced_parameters:
+    min_child_weight: 1
+    gamma: 0
+    reg_alpha: 0
+    reg_lambda: 1
+    scale_pos_weight: 1
+
+# Feature configuration
+features:
+  # Numerical features (continuous variables)
+  numerical:
+    - age
+    - cd4_count
+    - viral_load
+    - time_since_diagnosis
+    - art_adherence
+    - bmi
+    - hemoglobin
+    - albumin
+    - cd4_viral_ratio
+    - log_viral_load
+  
+  # Binary features (0/1 indicators)
+  binary:
+    - low_cd4
+    - high_viral_load
+    - poor_adherence
+    - gender_encoded
+  
+  # Categorical features (one-hot encoded)
+  categorical:
+    - gender
+    - comorbidities
+  
+  # One-hot encoded feature names
+  one_hot_features:
+    - comorbidity_None
+    - comorbidity_Diabetes
+    - comorbidity_Hypertension
+    - comorbidity_Both
+
+# Feature engineering configuration
+feature_engineering:
+  # Derived features to create
+  derived_features:
+    cd4_viral_ratio:
+      formula: "cd4_count / (viral_load + 1)"
+      description: "Ratio of CD4 count to viral load"
+    
+    log_viral_load:
+      formula: "log10(viral_load + 1)"
+      description: "Log10 transformed viral load"
+    
+    low_cd4:
+      formula: "cd4_count < 350"
+      description: "Indicator for low CD4 count"
+      
+    high_viral_load:
+      formula: "viral_load > 1000"
+      description: "Indicator for high viral load"
+      
+    poor_adherence:
+      formula: "art_adherence < 0.8"
+      description: "Indicator for poor ART adherence"
+  
+  # Thresholds for binary features
+  thresholds:
+    cd4_low_threshold: 350
+    viral_load_high_threshold: 1000
+    adherence_poor_threshold: 0.8
+    advanced_hiv_threshold: 200
+
+# Data preprocessing configuration
+preprocessing:
+  # Scaling configuration
+  scaling:
+    method: "standard"  # standard, minmax, robust
+    apply_to_features: "numerical"
+    
+  # Missing value handling
+  missing_values:
+    strategy: "median"  # mean, median, mode, drop
+    threshold: 0.1  # Drop features with >10% missing values
+    
+  # Outlier handling
+  outliers:
+    method: "iqr"  # iqr, zscore, isolation_forest
+    threshold: 3.0
+    action: "clip"  # clip, remove, keep
+    
+  # Data validation
+  validation:
+    age_range: [0, 120]
+    cd4_range: [0, 2000]
+    viral_load_range: [0, 10000000]
+    bmi_range: [10, 50]
+    hemoglobin_range: [5, 20]
+    albumin_range: [1, 6]
+    adherence_range: [0, 1]
+
+# Model training configuration
+training:
+  # Data splitting
+  test_size: 0.2
+  validation_size: 0.2
+  random_state: 42
+  stratify: true
+  
+  # Cross-validation
+  cv_folds: 5
+  cv_scoring: "roc_auc"
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+    
+  # Model selection
+  hyperparameter_tuning:
+    enabled: false
+    method: "grid_search"  # grid_search, random_search, bayesian
+    cv_folds: 3
+    n_iter: 50  # for random search
+    
+    # Parameter grid for tuning
+    param_grid:
+      n_estimators: [50, 100, 200]
+      max_depth: [3, 6, 9]
+      learning_rate: [0.01, 0.1, 0.2]
+      subsample: [0.8, 0.9, 1.0]
+
+# Model evaluation configuration
+evaluation:
+  # Primary metrics
+  primary_metric: "roc_auc"
+  
+  # All metrics to calculate
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - roc_auc
+    - precision_recall_auc
+    - specificity
+    - sensitivity
+    
+  # Threshold optimization
+  threshold_optimization:
+    enabled: true
+    method: "youden"  # youden, f1, precision_recall
+    
+  # Performance thresholds (minimum acceptable values)
+  performance_thresholds:
+    roc_auc: 0.75
+    accuracy: 0.70
+    precision: 0.65
+    recall: 0.70
+    f1: 0.67
+
+# Data generation configuration (for synthetic data)
+data_generation:
+  n_samples: 1000
+  random_state: 42
+  
+  # Feature distributions
+  distributions:
+    age:
+      type: "normal"
+      params: {mean: 40, std: 12}
+      
+    cd4_count:
+      type: "exponential"
+      params: {scale: 200}
+      
+    viral_load:
+      type: "lognormal"
+      params: {mean: 3, sigma: 2}
+      
+    time_since_diagnosis:
+      type: "exponential"
+      params: {scale: 3}
+      
+    art_adherence:
+      type: "uniform"
+      params: {low: 0, high: 1}
+      
+    bmi:
+      type: "normal"
+      params: {mean: 24, std: 4}
+      
+    hemoglobin:
+      type: "normal"
+      params: {mean: 12, std: 2}
+      
+    albumin:
+      type: "normal"
+      params: {mean: 3.5, std: 0.5}
+      
+    gender:
+      type: "categorical"
+      params: {categories: ["M", "F"], probabilities: [0.6, 0.4]}
+      
+    comorbidities:
+      type: "categorical"
+      params: 
+        categories: ["None", "Diabetes", "Hypertension", "Both"]
+        probabilities: [0.5, 0.2, 0.2, 0.1]
+
+# Model persistence configuration
+persistence:
+  model_path: "models/"
+  model_filename: "hiv_xgboost_model.pkl"
+  scaler_filename: "scaler.pkl"
+  encoder_filename: "label_encoder_gender.pkl"
+  features_filename: "feature_columns.pkl"
+  metadata_filename: "model_metadata.json"
+  
+  # Model versioning
+  versioning:
+    enabled: true
+    format: "timestamp"  # timestamp, semantic, hash
+    
+  # Model registry (for production)
+  registry:
+    enabled: false
+    backend: "mlflow"  # mlflow, wandb, neptune
+    experiment_name: "hiv_disease_prediction"
+
+# Monitoring configuration
+monitoring:
+  # Data drift detection
+  data_drift:
+    enabled: true
+    method: "ks_test"  # ks_test, chi2_test, psi
+    threshold: 0.05
+    
+  # Model performance monitoring
+  performance_monitoring:
+    enabled: true
+    metrics: ["accuracy", "auc", "precision", "recall"]
+    alert_threshold: 0.05  # Alert if performance drops by 5%
+    
+  # Prediction monitoring
+  prediction_monitoring:
+    log_predictions: true
+    sample_rate: 1.0  # Log 100% of predictions
+    
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # File logging
+  file_logging:
+    enabled: true
+    filename: "model_training.log"
+    max_size: "10MB"
+    backup_count: 5

@@ -1,0 +1,359 @@
+# Logging Configuration for HIV Disease Prediction API
+
+version: 1
+disable_existing_loggers: false
+
+# Formatters define the format of log messages
+formatters:
+  # Standard formatter for console and file logs
+  standard:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    
+  # Detailed formatter with more context
+  detailed:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s:%(lineno)d - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    
+  # JSON formatter for structured logging
+  json:
+    format: "%(asctime)s %(name)s %(levelname)s %(message)s"
+    class: "pythonjsonlogger.jsonlogger.JsonFormatter"
+    
+  # Simple formatter for development
+  simple:
+    format: "%(levelname)s - %(message)s"
+
+# Handlers define where log messages are sent
+handlers:
+  # Console handler for stdout
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+    
+  # File handler for general application logs
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/app.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+    
+  # File handler for error logs only
+  error_file:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/error.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 5
+    encoding: utf8
+    
+  # JSON file handler for structured logs
+  json_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/app_structured.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+    
+  # API request handler
+  api_requests:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/api_requests.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 20
+    encoding: utf8
+    
+  # Model predictions handler
+  predictions:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/predictions.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 30
+    encoding: utf8
+    
+  # Performance metrics handler
+  performance:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/performance.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 15
+    encoding: utf8
+    
+  # Security events handler
+  security:
+    class: logging.handlers.RotatingFileHandler
+    level: WARNING
+    formatter: detailed
+    filename: logs/security.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+
+# Loggers define the logging configuration for different parts of the application
+loggers:
+  # Root logger configuration
+  root:
+    level: INFO
+    handlers: [console, file, error_file]
+    propagate: false
+    
+  # FastAPI application logger
+  uvicorn:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+    qualname: uvicorn
+    
+  # FastAPI access logs
+  uvicorn.access:
+    level: INFO
+    handlers: [api_requests]
+    propagate: false
+    qualname: uvicorn.access
+    
+  # Application-specific loggers
+  hiv_prediction:
+    level: INFO
+    handlers: [console, file, json_file]
+    propagate: false
+    qualname: hiv_prediction
+    
+  # API request logger
+  hiv_prediction.api:
+    level: INFO
+    handlers: [api_requests, console]
+    propagate: false
+    qualname: hiv_prediction.api
+    
+  # Model prediction logger
+  hiv_prediction.model:
+    level: INFO
+    handlers: [predictions, console]
+    propagate: false
+    qualname: hiv_prediction.model
+    
+  # Data processing logger
+  hiv_prediction.data:
+    level: INFO
+    handlers: [file, console]
+    propagate: false
+    qualname: hiv_prediction.data
+    
+  # Performance monitoring logger
+  hiv_prediction.performance:
+    level: INFO
+    handlers: [performance, console]
+    propagate: false
+    qualname: hiv_prediction.performance
+    
+  # Security logger
+  hiv_prediction.security:
+    level: WARNING
+    handlers: [security, console]
+    propagate: false
+    qualname: hiv_prediction.security
+    
+  # Third-party library loggers
+  
+  # XGBoost logger
+  xgboost:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: xgboost
+    
+  # Scikit-learn logger
+  sklearn:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: sklearn
+    
+  # Pandas logger
+  pandas:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: pandas
+    
+  # HTTP client loggers
+  httpx:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: httpx
+    
+  requests:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: requests
+    
+  # Prometheus logger
+  prometheus_client:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+    qualname: prometheus_client
+
+# Environment-specific configurations
+environments:
+  development:
+    root:
+      level: DEBUG
+      handlers: [console, file]
+    hiv_prediction:
+      level: DEBUG
+    console:
+      level: DEBUG
+      formatter: detailed
+      
+  testing:
+    root:
+      level: WARNING
+      handlers: [console]
+    hiv_prediction:
+      level: WARNING
+    console:
+      level: WARNING
+      formatter: simple
+      
+  production:
+    root:
+      level: INFO
+      handlers: [file, error_file, json_file]
+    hiv_prediction:
+      level: INFO
+    console:
+      level: ERROR  # Only errors to console in production
+
+# Log rotation and cleanup settings
+rotation:
+  # Maximum age of log files (in days)
+  max_age: 30
+  
+  # Cleanup schedule (cron format)
+  cleanup_schedule: "0 2 * * *"  # Daily at 2 AM
+  
+  # Compression settings
+  compression:
+    enabled: true
+    format: "gzip"
+    
+# Log aggregation settings (for future use)
+aggregation:
+  enabled: false
+  
+  # ELK Stack configuration
+  elasticsearch:
+    enabled: false
+    host: "localhost"
+    port: 9200
+    index_pattern: "hiv-prediction-logs-{date}"
+    
+  # Fluentd configuration
+  fluentd:
+    enabled: false
+    host: "localhost"
+    port: 24224
+    tag: "hiv.prediction"
+    
+  # Syslog configuration
+  syslog:
+    enabled: false
+    host: "localhost"
+    port: 514
+    facility: "local0"
+
+# Monitoring and alerting for logs
+monitoring:
+  # Log-based alerts
+  alerts:
+    enabled: false
+    
+    # Error rate alerts
+    error_rate:
+      threshold: 10  # errors per minute
+      window: "5m"
+      
+    # Critical error alerts
+    critical_errors:
+      patterns:
+        - "CRITICAL"
+        - "Model loading failed"
+        - "Database connection failed"
+      immediate: true
+      
+  # Log metrics
+  metrics:
+    enabled: false
+    
+    # Metrics to track
+    track:
+      - log_level_counts
+      - error_rates
+      - response_times
+      - prediction_counts
+
+# Security settings for logging
+security:
+  # Data sanitization
+  sanitization:
+    enabled: true
+    
+    # Fields to sanitize/mask
+    sensitive_fields:
+      - "password"
+      - "token"
+      - "api_key"
+      - "patient_id"  # Mask patient identifiers
+      
+    # Masking pattern
+    mask_pattern: "***MASKED***"
+    
+  # Log encryption (for highly sensitive environments)
+  encryption:
+    enabled: false
+    algorithm: "AES-256"
+    key_file: "/etc/ssl/private/log_encryption.key"
+    
+  # Access control
+  access_control:
+    enabled: false
+    allowed_users: ["admin", "developer"]
+    log_access_attempts: true
+
+# Performance settings
+performance:
+  # Async logging
+  async_logging:
+    enabled: true
+    queue_size: 1000
+    
+  # Buffering
+  buffering:
+    enabled: true
+    buffer_size: 8192
+    flush_interval: 5  # seconds
+    
+  # Log sampling (for high-volume scenarios)
+  sampling:
+    enabled: false
+    rate: 0.1  # Log 10% of messages
+    
+    # Always log certain levels
+    always_log_levels: ["ERROR", "CRITICAL"]
